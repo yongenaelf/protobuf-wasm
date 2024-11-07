@@ -16,8 +16,8 @@ jobs:
         id: download
         with:
           repository: 'dsyer/protobuf-wasm'
-          tarBall: true
           latest: true
+          fileName: protobuf-wasm.tgz
           out-file-path: downloaded
 
       - run: ls -l downloaded

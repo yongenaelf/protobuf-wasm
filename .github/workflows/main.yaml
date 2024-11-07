@@ -12,8 +12,8 @@ jobs:
     steps:
     - name: Install dependencies
       run: |
-        apt-get update && export DEBIAN_FRONTEND=noninteractive \
-          && apt-get -y install --no-install-recommends autoconf automake libtool curl make g++ unzip emscripten pkg-config libprotobuf-dev libprotoc-dev protobuf-compiler libprotobuf-c-dev protobuf-c-compiler bzip2 lbzip2 xz-utils nodejs
+        sudo apt-get update && export DEBIAN_FRONTEND=noninteractive \
+          && sudo apt-get -y install --no-install-recommends autoconf automake libtool curl make g++ unzip emscripten pkg-config libprotobuf-dev libprotoc-dev protobuf-compiler libprotobuf-c-dev protobuf-c-compiler bzip2 lbzip2 xz-utils nodejs
 
     - name: Checkout repository
       uses: actions/checkout@v4

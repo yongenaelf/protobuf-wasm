@@ -10,20 +10,6 @@ jobs:
 
     steps:
 
-      - name: Clone emscripten-core/emsdk
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          repository: emscripten-core/emsdk
-          path: emsdk
-
-      - name: Install emsdk
-        working-directory: emsdk
-        run: |
-          ./emsdk install latest
-          ./emsdk activate latest
-          source ./emsdk_env.sh
-
       - uses: robinraju/release-downloader@v1
         with:
           repository: 'dsyer/protobuf-wasm'
@@ -32,11 +18,14 @@ jobs:
           extract: true
           out-file-path: protobuf-wasm
 
+      - uses: mymindstorm/setup-emsdk@v14
+
+      - uses: bytecodealliance/actions/wasmtime/setup@v1
+
       - name: Build
         working-directory: protobuf-wasm
         run: |
           emcc -Os -I ./include -s STANDALONE_WASM -s EXPORTED_FUNCTIONS="['_main']" ./lib/libprotobuf-c.a ./lib/libprotobuf.a -o protoc.wasm
-          curl https://wasmtime.dev/install.sh -sSf | bash
           wasmtime protoc.wasm --version
 
       - name: Upload

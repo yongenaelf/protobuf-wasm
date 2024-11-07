@@ -18,13 +18,16 @@ jobs:
           tarBall: true
           latest: true
           extract: true
+          out-file-path: downloaded
+
+      - run: ls -l downloaded
 
       - uses: mymindstorm/setup-emsdk@v14
 
       - uses: bytecodealliance/actions/wasmtime/setup@v1
 
       - name: Build
-        working-directory: protobuf-wasm
+        working-directory: downloaded
         run: |
           emcc -Os -I ./include -s STANDALONE_WASM -s EXPORTED_FUNCTIONS="['_main']" ./lib/libprotobuf-c.a ./lib/libprotobuf.a -o protoc.wasm
           wasmtime protoc.wasm --version

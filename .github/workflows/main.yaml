@@ -1,7 +1,9 @@
 name: CI
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
 
@@ -16,7 +18,6 @@ jobs:
           tarBall: true
           latest: true
           extract: true
-          out-file-path: protobuf-wasm
 
       - uses: mymindstorm/setup-emsdk@v14
 

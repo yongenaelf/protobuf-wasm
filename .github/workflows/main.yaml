@@ -2,82 +2,45 @@ name: CI
 
 on:
   workflow_dispatch:
-    inputs:
-      protobufVersion:
-        description: 'Protobuf version'
-        required: true
-        default: 'v3.12.4'
 
 jobs:
 
-  protobuf:
-    runs-on: ubuntu-latest
-    steps:
-    
-    - name: Cache Protobuf
-      id: cache-protobuf
-      uses: actions/cache@v4
-      with:
-        path: .
-        key: ${{ inputs.protobufVersion }}-protobuf
-
-    - name: Install dependencies
-      if: steps.cache-protobuf.outputs.cache-hit != 'true'
-      run: |
-        sudo apt-get update && export DEBIAN_FRONTEND=noninteractive \
-          && sudo apt-get -y install --no-install-recommends autoconf automake libtool curl make g++ unzip emscripten pkg-config libprotobuf-dev libprotoc-dev protobuf-compiler libprotobuf-c-dev protobuf-c-compiler bzip2 lbzip2 xz-utils nodejs
-
-    - name: Checkout repository
-      if: steps.cache-protobuf.outputs.cache-hit != 'true'
-      uses: actions/checkout@v4
-      with:
-        repository: protocolbuffers/protobuf
-        ref: ${{ inputs.protobufVersion }}
-
-    - name: Build Protobuf
-      if: steps.cache-protobuf.outputs.cache-hit != 'true'
-      run: |
-        ./autogen.sh
-        emconfigure ./configure --host=none-none-none
-        emmake make
-        find . -name \*.a
-
-    - name: Upload Protobuf
-      uses: actions/upload-artifact@v4
-      with:
-        name: protobuf
-        path: .
-
   build:
-    needs: protobuf
     runs-on: ubuntu-latest
 
     steps:
-    - name: Install dependencies
-      run: |
-        sudo apt-get update && export DEBIAN_FRONTEND=noninteractive \
-          && sudo apt-get -y install --no-install-recommends autoconf automake libtool curl make g++ unzip emscripten pkg-config libprotobuf-dev libprotoc-dev protobuf-compiler libprotobuf-c-dev protobuf-c-compiler bzip2 lbzip2 xz-utils nodejs
 
-    - uses: actions/download-artifact@v4
-      with:
-        name: protobuf
-        path: build/protobuf
-    - name: Display structure of downloaded files
-      run: ls -R build/protobuf
+      - name: Clone emscripten-core/emsdk
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          repository: emscripten-core/emsdk
+          path: emsdk
 
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Install emsdk
+        working-directory: emsdk
+        run: |
+          ./emsdk install latest
+          ./emsdk activate latest
+          source ./emsdk_env.sh
 
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        repository: protobuf-c/protobuf-c
-        path: build/protobuf-c
+      - uses: robinraju/release-downloader@v1
+        with:
+          repository: 'dsyer/protobuf-wasm'
+          tarBall: true
+          latest: true
+          extract: true
+          out-file-path: protobuf-wasm
 
-    - name: Build Protobuf-c
-      working-directory: build/protobuf-c
-      run: |
-        ./autogen.sh
-        EMMAKEN_CFLAGS=-I../protobuf/src EM_PKG_CONFIG_PATH=../protobuf emconfigure ./configure --host=none-none-none
-        EMMAKEN_CFLAGS='-I../protobuf/src -L../protobuf/src/.libs' emmake make
-        find . -name \*.a
+      - name: Build
+        working-directory: protobuf-wasm
+        run: |
+          emcc -Os -I ./include -s STANDALONE_WASM -s EXPORTED_FUNCTIONS="['_main']" ./lib/libprotobuf-c.a ./lib/libprotobuf.a -o protoc.wasm
+          curl https://wasmtime.dev/install.sh -sSf | bash
+          wasmtime protoc.wasm --version
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: protoc.wasm
+          path: protobuf-wasm/protoc.wasm

@@ -37,12 +37,26 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: protobuf-c/protobuf-c
+        path: build/protobuf-c-binary
+
+    - name: Build Protobuf-c binary
+      working-directory: build/protobuf-c-binary
+      run: |
+        ./autogen.sh && ./configure && make && make install
+        chmod +x ./protoc-c/protoc-gen-c
+        find . -name \*.a
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        repository: protobuf-c/protobuf-c
         path: build/protobuf-c
 
     - name: Build Protobuf-c
       working-directory: build/protobuf-c
       run: |
         ./autogen.sh
+        cp ../protobuf-c-binary/protoc-c/protoc-gen-c ./protoc-c/protoc-gen-c
         EMMAKEN_CFLAGS=-I../protobuf/src EM_PKG_CONFIG_PATH=../protobuf emconfigure ./configure --host=none-none-none
         EMMAKEN_CFLAGS='-I../protobuf/src -L../protobuf/src/.libs' emmake make
         find . -name \*.a

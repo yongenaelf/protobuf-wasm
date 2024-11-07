@@ -18,7 +18,7 @@ jobs:
       id: cache-protobuf
       uses: actions/cache@v4
       with:
-        path: ${{ github.workspace }}
+        path: .
         key: ${{ inputs.protobufVersion }}-protobuf
 
     - name: Install dependencies
@@ -46,6 +46,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: protobuf
+        path: .
 
   build:
     needs: protobuf

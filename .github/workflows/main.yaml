@@ -18,7 +18,15 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Cache Protobuf
+      id: cache-protobuf
+      uses: actions/cache@v4
+      with:
+        path: build/protobuf
+        key: v3.12.4-protobuf
+
     - name: Checkout repository
+      if: steps.cache-protobuf.outputs.cache-hit != 'true'
       uses: actions/checkout@v4
       with:
         repository: protocolbuffers/protobuf
@@ -26,6 +34,7 @@ jobs:
         path: build/protobuf
 
     - name: Build Protobuf
+      if: steps.cache-protobuf.outputs.cache-hit != 'true'
       working-directory: build/protobuf
       run: |
         ./autogen.sh
